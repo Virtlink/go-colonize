@@ -1,0 +1,20 @@
+## Intellij
+/.idea/
+/out/
+*.iml
+*.ipr
+*.iws
+
+
+## Java
+*.class
+*.log
+*.jar
+hs_err_pid*
+
+## Gradle
+/.gradle
+/build/
+gradle-app.setting
+!gradle-wrapper.jar
+
