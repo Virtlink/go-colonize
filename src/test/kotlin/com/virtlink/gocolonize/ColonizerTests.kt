@@ -101,7 +101,7 @@ class ColonizerTests {
     }
 
     private val colonizeFileTestData = listOf(
-        "64bit.go" to "64bit.expected.go"
+        "example.go" to "example.expected.go"
     )
 
     @TestFactory
