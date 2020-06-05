@@ -26,6 +26,8 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Pack shadow JAR
+      run: ./gradlew shadowJar
     - name: Cache Gradle packages
       uses: actions/cache@v2
       with:
