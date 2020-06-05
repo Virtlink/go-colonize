@@ -1,14 +1,17 @@
 package com.virtlink.gocolonize
 
+import java.io.*
+import java.lang.Appendable
+
 object Colonizer {
 
     private const val newline = "\\n"
     private const val unicode_char = "[^\\n]"
-    private const val unicode_letter = "\\\\p{L}"
-    private const val unicode_digit = "\\\\p{N}"
+    private const val unicode_letter = "\\p{L}"
+    private const val unicode_digit = "\\p{N}"
     private const val letter = "[${unicode_letter}_]"
 
-    private const val identifier = "$letter[$unicode_digit${unicode_digit}_]*"
+    private const val identifier = "$letter[$unicode_letter${unicode_digit}_]*"
 
     private const val decimal_digit = "[0-9]"
     private const val binary_digit = "[0-1]"
@@ -25,7 +28,7 @@ object Colonizer {
     private const val octal_lit = "(?:0[oO]?_?$octal_digits)"
     private const val hex_lit = "(?:0[xX]_?$hex_digits)"
 
-    private const val decimal_exponent = "(?:[eE])[+\\-]?$decimal_digits)"
+    private const val decimal_exponent = "(?:[eE][+\\-]?$decimal_digits)"
     private const val decimal_float_lit =
         "(?:$decimal_digits$decimal_exponent)|(?:\\.$decimal_digits$decimal_exponent?)"
 
@@ -53,14 +56,52 @@ object Colonizer {
     private const val string_lit = "(?:$raw_string_lit|$interpreted_string_lit)"
 
     /**
+     * Adds semi-colons to the lines of the specified input stream,
+     * and writes the result to the specified output stream.
+     *
+     * @param inputStream the input stream to read from
+     * @param outputStream the output stream to write to
+     */
+    fun colonize(inputStream: InputStream, outputStream: OutputStream) {
+        BufferedInputStream(inputStream).use { ins ->
+            BufferedOutputStream(outputStream).use { outs ->
+                InputStreamReader(ins).use { ir ->
+                    OutputStreamWriter(outs).use { or ->
+                        colonize(ir, or)
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Adds semi-colons to the lines of the specified reader,
+     * and writes the result to the specified writer.
+     *
+     * @param reader the reader to read from
+     * @param writer the writer to write to
+     */
+    fun colonize(reader: Reader, writer: Appendable) {
+        val tokenizer = InputTokenizer()
+        BufferedReader(reader).use {
+            var line = it.readLine()
+            while (line != null) {
+                val newLine = colonizeLine(line, tokenizer)
+                writer.appendln(newLine)
+                line = it.readLine()
+            }
+        }
+    }
+
+    /**
      * Adds semi-colons to the specified line.
      *
-     * @param line the line to colonize
+     * @param tokens the tokens of the line
      * @return the colonized line
      */
-    fun colonizeLine(line: String): String {
-        // TODO: Improved tokenization
-        val lastToken = line.split(' ', '\t', '\r', '\n').lastOrNull() ?: return line
+    fun colonizeLine(line: String, tokenize: InputTokenizer): String {
+        val tokens = tokenize.tokenizeLine(line)
+        val lastToken = tokens.lastOrNull() ?: return line
 
         // @formatter:off
         val terminateWithSemiColon =
@@ -74,9 +115,9 @@ object Colonizer {
             isImaginaryLit(lastToken)
         // @formatter:on
 
-        // TODO: Inserts a semi-colon before a closing ) or } in a statement context
+        return if (terminateWithSemiColon) { "$line;" } else { line }
 
-        TODO()
+        // TODO: Insert a semi-colon before a closing ) or } in a statement context
     }
 
     fun isKeyword(token: String): Boolean =
@@ -102,5 +143,34 @@ object Colonizer {
 
     fun isImaginaryLit(token: String): Boolean =
         token.matches(Regex(imaginary_lit))
+
+//    // Longer delimiters ordered before shorter delimiters that are its prefix
+//    private val delimiters = listOf(
+//        "/*", "*/", "//",
+//        "==", "!=", "<=", ">=", "||", "&&", "&ˆ", "<<", ">>", "<-", "->", "++", "--",
+//        ":=", "=", "|", "&", "^", "+", "-", "*", "/", "%",
+//        ";", ",", ":", "...", ".",
+//        "{", "}", "(", ")", "<", ">", "[", "]",
+//        " ", "\t", "\r", "\n"
+//    )
+//
+//    fun splitTokens(str: String): List<String> {
+//        val tokens = mutableListOf<String>()
+//
+//        var index = 0
+//        while (index < str.length) {
+//            val result = str.findAnyOf(delimiters, index)
+//            if (result == null) {
+//                tokens.add(str.substring(index))
+//                break
+//            }
+//            val (nextIndex, delimiter) = result
+//            if (nextIndex > index) tokens.add(str.substring(index, nextIndex))
+//            if (delimiter !in arrayOf(" ", "\t", "\r", "\n")) tokens.add(delimiter)
+//            index = nextIndex + delimiter.length
+//        }
+//
+//        return tokens
+//    }
 
 }
