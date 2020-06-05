@@ -23,7 +23,7 @@ object Colonizer {
     private const val octal_digits = "(?:$octal_digit(?:_?$octal_digit)*)"
     private const val hex_digits = "(?:$hex_digit(?:_?$hex_digit)*)"
 
-    private const val decimal_lit = "(?:0|[1-9](?:_?$decimal_digits))"
+    private const val decimal_lit = "(?:0|[1-9](?:_?$decimal_digits)?)"
     private const val binary_lit = "(?:0[bB]_?$binary_digits)"
     private const val octal_lit = "(?:0[oO]?_?$octal_digits)"
     private const val hex_lit = "(?:0[xX]_?$hex_digits)"
@@ -82,42 +82,44 @@ object Colonizer {
      * @param writer the writer to write to
      */
     fun colonize(reader: Reader, writer: Appendable) {
-        val tokenizer = InputTokenizer()
         BufferedReader(reader).use {
-            var line = it.readLine()
-            while (line != null) {
-                val newLine = colonizeLine(line, tokenizer)
-                writer.appendln(newLine)
-                line = it.readLine()
+            val str = reader.readText()
+            val tokens = InputTokenizer.tokenize(str)
+            for(tokenLine in tokens) {
+                val last = tokenLine.lastOrNull { it != "\n" }
+
+                val addSemiColon = last != null && shouldEndWithSemicolon(last)
+
+                tokenLine.dropLastWhile { it == "\n" }.forEach { writer.append(it) }
+                if (addSemiColon) {
+                    writer.append(";")
+                }
+
+                val eol = tokenLine.lastOrNull()
+                if (eol == "\n") writer.appendln()
             }
         }
+
+        // TODO: Insert a semi-colon before a closing ) or } in a statement context
     }
 
     /**
-     * Adds semi-colons to the specified line.
+     * Whether the line should end with a semi-colon.
      *
-     * @param tokens the tokens of the line
-     * @return the colonized line
+     * @param lastToken the last token on the line
+     * @return `true` to add a terminating semi-colon; otherwise, `false`
      */
-    fun colonizeLine(line: String, tokenize: InputTokenizer): String {
-        val tokens = tokenize.tokenizeLine(line)
-        val lastToken = tokens.lastOrNull() ?: return line
-
+    fun shouldEndWithSemicolon(lastToken: String): Boolean {
         // @formatter:off
-        val terminateWithSemiColon =
-            isKeyword(lastToken) ||
-            isOperator(lastToken) ||
-            isIdentifier(lastToken) ||
-            isIntLit(lastToken) ||
-            isFloatLit(lastToken) ||
-            isStringLit(lastToken) ||
-            isRuneLit(lastToken) ||
-            isImaginaryLit(lastToken)
+        return isKeyword(lastToken)
+            || isOperator(lastToken)
+            || isIdentifier(lastToken)
+            || isIntLit(lastToken)
+            || isFloatLit(lastToken)
+            || isStringLit(lastToken)
+            || isRuneLit(lastToken)
+            || isImaginaryLit(lastToken)
         // @formatter:on
-
-        return if (terminateWithSemiColon) { "$line;" } else { line }
-
-        // TODO: Insert a semi-colon before a closing ) or } in a statement context
     }
 
     fun isKeyword(token: String): Boolean =
@@ -143,34 +145,5 @@ object Colonizer {
 
     fun isImaginaryLit(token: String): Boolean =
         token.matches(Regex(imaginary_lit))
-
-//    // Longer delimiters ordered before shorter delimiters that are its prefix
-//    private val delimiters = listOf(
-//        "/*", "*/", "//",
-//        "==", "!=", "<=", ">=", "||", "&&", "&ˆ", "<<", ">>", "<-", "->", "++", "--",
-//        ":=", "=", "|", "&", "^", "+", "-", "*", "/", "%",
-//        ";", ",", ":", "...", ".",
-//        "{", "}", "(", ")", "<", ">", "[", "]",
-//        " ", "\t", "\r", "\n"
-//    )
-//
-//    fun splitTokens(str: String): List<String> {
-//        val tokens = mutableListOf<String>()
-//
-//        var index = 0
-//        while (index < str.length) {
-//            val result = str.findAnyOf(delimiters, index)
-//            if (result == null) {
-//                tokens.add(str.substring(index))
-//                break
-//            }
-//            val (nextIndex, delimiter) = result
-//            if (nextIndex > index) tokens.add(str.substring(index, nextIndex))
-//            if (delimiter !in arrayOf(" ", "\t", "\r", "\n")) tokens.add(delimiter)
-//            index = nextIndex + delimiter.length
-//        }
-//
-//        return tokens
-//    }
 
 }

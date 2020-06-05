@@ -3,109 +3,164 @@ package com.virtlink.gocolonize
 /**
  * Stateful class for tokenizing input.
  */
-class InputTokenizer {
+object InputTokenizer {
 
     // Longer delimiters ordered before shorter delimiters that are its prefix
     private val delimiters = listOf(
         "/*", "*/", "//",
+        "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", "<<=", ">>=", "&^=",
         "==", "!=", "<=", ">=", "||", "&&", "&ˆ", "<<", ">>", "<-", "->", "++", "--",
         ":=", "=", "|", "&", "^", "+", "-", "*", "/", "%",
-        ";", ",", ":", "...", ".",
+        "...", ";", ",", ":", ".", "!",
         "{", "}", "(", ")", "<", ">", "[", "]",
         "\"", "'", "`",
         " ", "\t", "\r", "\n"
     )
 
-    private var state = State.Normal
-
-    fun tokenizeLine(line: String): List<String> {
-        return when (this.state) {
-            State.Normal -> tokenizeNormalLine(line)
-            State.RawString -> tokenizeRawString(line)
-            State.CommentBlock -> tokenizeCommentBlock(line)
-            else -> throw UnsupportedOperationException()
-        }
-    }
-
-    private fun tokenizeRawString(line: String, startIndex: Int = 0): List<String> {
-        val stringEnd = line.indexOf("`", startIndex)
-        if (stringEnd == -1) return listOf(line)
-        // Make a single token of the string, followed by the tokenized rest of the line
-        state = State.Normal
-        return listOf(line.substring(0, stringEnd + 1)) + tokenizeLine(line.substring(stringEnd + 1))
-    }
-
-    private fun tokenizeInterpretedString(line: String, startIndex: Int = 0): List<String> {
-        var occurrence = line.findAnyOf(listOf("\\\\", "\\\"", "\""), startIndex)
-        while (occurrence != null) {
-            val (occIndex, occStr) = occurrence
-            if (occStr != "\"") {
-                occurrence = line.findAnyOf(listOf("\\\\", "\\\"", "\""), occIndex + occStr.length)
-            } else {
-                // Make a single token of the string, followed by the tokenized rest of the line
-                state = State.Normal
-                return listOf(line.substring(0, occIndex + 1)) + tokenizeLine(line.substring(occIndex + 1))
-            }
-        }
-        return listOf(line)
-    }
-
-    private fun tokenizeCommentBlock(line: String, startIndex: Int = 0): List<String> {
-        val commentEnd = line.indexOf("*/", startIndex)
-        if (commentEnd == -1) return listOf(line)
-        // Make a single token of the comment, followed by the tokenized rest of the line
-        state = State.Normal
-        return listOf(line.substring(0, commentEnd + 2)) + tokenizeLine(line.substring(commentEnd + 2))
-    }
-
-    private fun tokenizeNormalLine(line: String): List<String> {
-        val tokens = mutableListOf<String>()
+    /**
+     * Tokenizes the given input, producing a list of tokens per line.
+     */
+    fun tokenize(input: String): List<List<String>> {
+        val lines = mutableListOf<List<String>>()
+        var tokens = mutableListOf<String>()
+        lines.add(tokens)
 
         var index = 0
-        while (index < line.length) {
-            val result = line.findAnyOf(delimiters, index)
+        while (index < input.length) {
+            val result = input.findAnyOf(delimiters, index)
             if (result == null) {
-                tokens.add(line.substring(index))
+                // EOF
+                tokens.add(input.substring(index))
                 break
             }
             val (nextIndex, delimiter) = result
-            if (nextIndex > index) tokens.add(line.substring(index, nextIndex))
+            if (nextIndex > index) {
+                // Token between the previous delimiter and the next
+                tokens.add(input.substring(index, nextIndex))
+            }
+            index = nextIndex
+
             when (delimiter) {
+                "\n" -> {
+                    // EOL
+                    tokens.add(delimiter)
+                    index += delimiter.length
+                    // New line
+                    tokens = mutableListOf()
+                    lines.add(tokens)
+                }
                 "//" -> {
-                    // A single-line comment
-                    tokens.add(line.substring(nextIndex))
-                    return tokens
+                    // Single-line comment
+                    val eol = input.indexOf('\n', index)
+                    if (eol >= 0) {
+                        // Comment until EOL
+                        assert(eol >= index)
+                        tokens.add(input.substring(index, eol))
+                        index = eol
+                    } else if (eol == -1) {
+                        // Comment until EOF
+                        tokens.add(input.substring(index))
+                        index = input.length
+                    }
                 }
                 "/*" -> {
-                    // Entering a block comment
-                    state = State.CommentBlock
-                    return tokens + tokenizeCommentBlock(line.substring(nextIndex), 2)
+                    // Block comment
+                    val commentEnd = input.indexOf("*/", index)
+                    if (commentEnd >= 0) {
+                        // Comment until */
+                        assert(commentEnd >= index)
+                        tokens.add(input.substring(index, commentEnd + 2))
+                        index = commentEnd + 2
+                    } else if (commentEnd == -1) {
+                        // Comment not ended
+                        tokens.add(input.substring(index))
+                        index = input.length
+                    }
                 }
                 "\"" -> {
-                    // Entering an interpreted string
-                    return tokens + tokenizeInterpretedString(line.substring(nextIndex), 1)
+                    // Interpreted string
+                    var occurrence = input.findAnyOf(listOf("\\\\", "\\\"", "\"", "\n"), index + 1)
+                    loop@ while (occurrence != null) {
+                        val (occIndex, occStr) = occurrence
+                        when (occStr) {
+                            "\n" -> {
+                                // String until newline
+                                tokens.add(input.substring(index, occIndex))
+                                index = occIndex
+                            }
+                            "\"" -> {
+                                // String until "
+                                assert(occIndex >= index)
+                                tokens.add(input.substring(index, occIndex + 1))
+                                index = occIndex + 1
+                                break@loop
+                            }
+                            else -> {
+                                // Escape sequence
+                                occurrence = input.findAnyOf(listOf("\\\\", "\\\"", "\"", "\n"), occIndex + occStr.length)
+                            }
+                        }
+                    }
+                    if (occurrence == null) {
+                        // String not ended
+                        tokens.add(input.substring(index))
+                        index = input.length
+                    }
                 }
                 "`" -> {
-                    // Entering a raw string
-                    state = State.RawString
-                    return tokens + tokenizeRawString(line.substring(nextIndex), 1)
+                    // Raw string
+                    val stringEnd = input.indexOf("`", index + 1)
+                    if (stringEnd >= 0) {
+                        // String until `
+                        assert(stringEnd >= index)
+                        tokens.add(input.substring(index, stringEnd + 1))
+                        index = stringEnd + 1
+                    } else if (stringEnd == -1) {
+                        // String not ended
+                        tokens.add(input.substring(index))
+                        index = input.length
+                    }
                 }
-                !in arrayOf(" ", "\t", "\r", "\n") -> {
-                    // A non-whitespace token
+                "'" -> {
+                    // Rune
+                    var occurrence = input.findAnyOf(listOf("\\\\", "\\'", "'", "\n"), index + 1)
+                    loop@ while (occurrence != null) {
+                        val (occIndex, occStr) = occurrence
+                        when (occStr) {
+                            "\n" -> {
+                                // Rune until newline
+                                tokens.add(input.substring(index, occIndex))
+                                index = occIndex
+                            }
+                            "\"" -> {
+                                // Rune until '
+                                assert(occIndex >= index)
+                                tokens.add(input.substring(index, occIndex + 1))
+                                index = occIndex + 1
+                                break@loop
+                            }
+                            else -> {
+                                // Escape sequence
+                                occurrence = input.findAnyOf(listOf("\\\\", "\\'", "'", "\n"), occIndex + occStr.length)
+                            }
+                        }
+                    }
+                    if (occurrence == null) {
+                        // Rune not ended
+                        tokens.add(input.substring(index))
+                        index = input.length
+                    }
+                }
+                else -> {
+                    // Delimiter
                     tokens.add(delimiter)
+                    index += delimiter.length
                 }
             }
-
-            index = nextIndex + delimiter.length
         }
 
-        return tokens
-    }
+        return lines
 
-    private enum class State {
-        Normal,
-        RawString,
-        CommentBlock
     }
 
 }

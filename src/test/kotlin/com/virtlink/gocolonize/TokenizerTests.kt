@@ -8,21 +8,19 @@ class TokenizerTests {
     @Test
     fun test1() {
         val input = "aa bb++ c=d /* e fg != hi */ jk \"l m \\\\\\\\\\\"\" `raw string` fin"
-        val sut = InputTokenizer()
 
-        val tokens = sut.tokenizeLine(input)
+        val tokens = InputTokenizer.tokenize(input)
 
-        assertEquals(listOf("aa", "bb", "++", "c", "=", "d", "/* e fg != hi */", "jk", "\"l m \\\\\\\\\\\"\"", "`raw string`", "fin"), tokens)
+        assertEquals(listOf(listOf("aa", " ", "bb", "++", " ", "c", "=", "d", " ", "/* e fg != hi */", " ", "jk", " ", "\"l m \\\\\\\\\\\"\"", " ", "`raw string`", " ", "fin")), tokens)
     }
 
-//    @Test
-//    fun test2() {
-//        val input = "aa bb++ c=d /* e\n fg != hi */ jk \"l m \\\\\\\\\\\"\" `raw\nstring` fin"
-//        val sut = InputTokenizer()
-//
-//        val tokens = sut.tokenizeLine(input)
-//
-//        assertEquals(listOf("aa", "bb", "++", "c", "=", "d", "/* e", " fg != hi */", "jk", "\"l m \\\\\\\\\\\"\"", "`raw", "string`", "fin"), tokens)
-//    }
+    @Test
+    fun test2() {
+        val input = "aa bb++\nc=d /* e\n fg != hi */ jk \"l m \\\\\\\\\\\"\" `raw\nstring` fin"
+
+        val tokens = InputTokenizer.tokenize(input)
+
+        assertEquals(listOf(listOf("aa", " ", "bb", "++", "\n"), listOf("c", "=", "d", " ", "/* e\n fg != hi */", " ", "jk", " ", "\"l m \\\\\\\\\\\"\"", " ", "`raw\nstring`", " ", "fin")), tokens)
+    }
 
 }
