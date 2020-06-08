@@ -63,15 +63,13 @@ object Colonizer {
      * @param outputStream the output stream to write to
      */
     fun colonize(inputStream: InputStream, outputStream: OutputStream) {
-        BufferedInputStream(inputStream).use { ins ->
-            BufferedOutputStream(outputStream).use { outs ->
-                InputStreamReader(ins).use { ir ->
-                    OutputStreamWriter(outs).use { or ->
-                        colonize(ir, or)
-                    }
-                }
-            }
-        }
+        val ins = BufferedInputStream(inputStream)
+        val outs = BufferedOutputStream(outputStream)
+        val ir = InputStreamReader(ins)
+        val or = OutputStreamWriter(outs)
+        colonize(ir, or)
+        or.flush()
+        outs.flush()
     }
 
     /**
@@ -82,21 +80,19 @@ object Colonizer {
      * @param writer the writer to write to
      */
     fun colonize(reader: Reader, writer: Appendable) {
-        BufferedReader(reader).use {
-            val str = reader.readText()
-            val tokens = InputTokenizer.tokenize(str)
-            for(tokenLine in tokens) {
-                val (significantTokens, trailingLayout) = splitAtEnd(tokenLine)
-                val last = significantTokens.lastOrNull()
+        val str = reader.readText()
+        val tokens = InputTokenizer.tokenize(str)
+        for(tokenLine in tokens) {
+            val (significantTokens, trailingLayout) = splitAtEnd(tokenLine)
+            val last = significantTokens.lastOrNull()
 
-                val addSemiColon = last != null && shouldEndWithSemicolon(last)
+            val addSemiColon = last != null && shouldEndWithSemicolon(last)
 
-                significantTokens.forEach { writer.append(it) }
-                if (addSemiColon) {
-                    writer.append(";")
-                }
-                trailingLayout.forEach { writer.append(it) }
+            significantTokens.forEach { writer.append(it) }
+            if (addSemiColon) {
+                writer.append(";")
             }
+            trailingLayout.forEach { writer.append(it) }
         }
 
         // TODO: Insert a semi-colon before a closing ) or } in a statement context
