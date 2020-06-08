@@ -52,7 +52,7 @@ object Colonizer {
     private const val rune_lit = "(?:'(?:$unicode_value|$byte_value)')"
 
     private const val interpreted_string_lit = "(?:\"(?:$unicode_value|$byte_value)*\")"
-    private const val raw_string_lit = "(?:`(?:$unicode_char|$newline)*`)"
+    private const val raw_string_lit = "(?:`[\\s\\S]*`)" // stack overflow: "(?:`(?:$unicode_char|$newline)*`)"
     private const val string_lit = "(?:$raw_string_lit|$interpreted_string_lit)"
 
     /**
