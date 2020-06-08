@@ -21,7 +21,7 @@ package main;
 import (
 	"flag";
 	"fmt";
-	"math/big" // only used for printing
+	"math/big"; // only used for printing
 	"os";
 	"strconv";
 	"testing";
@@ -40,7 +40,7 @@ var (
 // a big.Word; the value zero corresponds to the empty nat slice.
 type nat []big.Word;
 
-const W = 1 << (5 + ^big.Word(0)>>63) // big.Word size in bits
+const W = 1 << (5 + ^big.Word(0)>>63); // big.Word size in bits
 
 // The following methods are extracted from math/big to make this a
 // stand-alone program that can easily be run without dependencies
@@ -48,11 +48,11 @@ const W = 1 << (5 + ^big.Word(0)>>63) // big.Word size in bits
 
 func (z nat) make(n int) nat {
 	if n <= cap(z) {
-		return z[:n] // reuse z
+		return z[:n]; // reuse z
 	};
 	// Choosing a good value for e has significant performance impact
 	// because it increases the chance that a value can be reused.
-	const e = 4 // extra capacity
+	const e = 4; // extra capacity
 	return make(nat, n, n+e);
 };
 
@@ -81,8 +81,8 @@ func (z nat) halfAdd(x, y nat) nat {
 	};
 	// m >= n > 0
 
-	const W2 = W / 2         // half-digit size in bits
-	const M2 = (1 << W2) - 1 // lower half-digit mask
+	const W2 = W / 2;         // half-digit size in bits
+	const M2 = (1 << W2) - 1; // lower half-digit mask
 
 	z = z.make(m + 1);
 	var c big.Word;
@@ -192,32 +192,32 @@ func fibo(n int, half, opt bool) nat {
 	f1 := nat{1};
 	if half {
 		if opt {
-			var f2 nat // reuse f2
+			var f2 nat; // reuse f2
 			for i := 1; i < n; i++ {
 				f2 = f2.halfAdd(f1, f0);
 				f0, f1, f2 = f1, f2, f0;
 			};
 		} else {
 			for i := 1; i < n; i++ {
-				f2 := nat(nil).halfAdd(f1, f0) // allocate a new f2 each time
+				f2 := nat(nil).halfAdd(f1, f0); // allocate a new f2 each time
 				f0, f1 = f1, f2;
 			};
 		};
 	} else {
 		if opt {
-			var f2 nat // reuse f2
+			var f2 nat; // reuse f2
 			for i := 1; i < n; i++ {
 				f2 = f2.add(f1, f0);
 				f0, f1, f2 = f1, f2, f0;
 			};
 		} else {
 			for i := 1; i < n; i++ {
-				f2 := nat(nil).add(f1, f0) // allocate a new f2 each time
+				f2 := nat(nil).add(f1, f0); // allocate a new f2 each time
 				f0, f1 = f1, f2;
 			};
 		};
 	};
-	return f1 // was f2 before shuffle
+	return f1; // was f2 before shuffle
 };
 
 var tests = []struct {

@@ -86,21 +86,30 @@ object Colonizer {
             val str = reader.readText()
             val tokens = InputTokenizer.tokenize(str)
             for(tokenLine in tokens) {
-                val last = tokenLine.lastOrNull { it != "\n" }
+                val (significantTokens, trailingLayout) = splitAtEnd(tokenLine)
+                val last = significantTokens.lastOrNull()
 
                 val addSemiColon = last != null && shouldEndWithSemicolon(last)
 
-                tokenLine.dropLastWhile { it == "\n" }.forEach { writer.append(it) }
+                significantTokens.forEach { writer.append(it) }
                 if (addSemiColon) {
                     writer.append(";")
                 }
-
-                val eol = tokenLine.lastOrNull()
-                if (eol == "\n") writer.appendln()
+                trailingLayout.forEach { writer.append(it) }
             }
         }
 
         // TODO: Insert a semi-colon before a closing ) or } in a statement context
+    }
+
+    /**
+     * Splits the tokens of a line before the terminating whitespace, newline, or comment
+     */
+    private fun splitAtEnd(tokenLine: List<String>): Pair<List<String>, List<String>> {
+        return Pair(
+            tokenLine.dropLastWhile { t -> t.startsWith("//") || t.startsWith("/*") || t.isBlank() },
+            tokenLine.takeLastWhile { t -> t.startsWith("//") || t.startsWith("/*") || t.isBlank() }
+        )
     }
 
     /**

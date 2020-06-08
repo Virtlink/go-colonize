@@ -101,9 +101,10 @@ class ColonizerTests {
     }
 
     private val colonizeFileTestData = listOf(
-//        "example.go" to "example.expected.go",
-//        "example2.go" to "example2.expected.go",
-        "example3.go" to "example3.expected.go"
+        "example.go" to "example.expected.go",
+        "fibo.go" to "fibo.expected.go",
+        "index.go" to "index.expected.go",
+        "alias2.go" to "alias2.expected.go"
     )
 
     @TestFactory
