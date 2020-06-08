@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+set -o errexit
+set -o nounset
+set -o pipefail
+#set -o xtrace
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+IFS=$'\n'; set -f
+for input in $(find "$1" -name '*.go'); do
+  "$DIR"/colonize "$input" -o "${input%.go}.colonized.go"
+done
+unset IFS; set +f
