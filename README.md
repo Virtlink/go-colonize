@@ -18,6 +18,10 @@ Specify an input file and output file:
 If the output is omitted, the result will be output on standard out.
 To read the input from the standard input, specify `-` as the input file.
 
+## TODO
+- [ ] Colonize statements before closing brackets
+ 
+
 ## License
 Copyright 2020 Daniel A. A. Pelsmaeker
 
