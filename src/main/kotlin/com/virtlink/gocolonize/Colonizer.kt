@@ -2,6 +2,7 @@ package com.virtlink.gocolonize
 
 import java.io.*
 import java.lang.Appendable
+import java.nio.file.Path
 
 object Colonizer {
 
@@ -63,24 +64,44 @@ object Colonizer {
      * @param outputStream the output stream to write to
      */
     fun colonize(inputStream: InputStream, outputStream: OutputStream) {
-        val ins = BufferedInputStream(inputStream)
-        val outs = BufferedOutputStream(outputStream)
-        val ir = InputStreamReader(ins)
-        val or = OutputStreamWriter(outs)
-        colonize(ir, or)
-        or.flush()
-        outs.flush()
+        val str = BufferedInputStream(inputStream).use {
+            InputStreamReader(it).use { ir ->
+                ir.readText()
+            }
+        }
+        BufferedOutputStream(outputStream).use {
+            OutputStreamWriter(it).use { ow ->
+                colonize(str, ow)
+            }
+        }
+    }
+
+    /**
+     * Adds semi-colons to the lines of the specified input stream,
+     * and writes the result to the specified output stream.
+     *
+     * @param inputStream the input path; or `null` to input from STDIN
+     * @param outputPath the output path; or `null` to output to STDOUT
+     */
+    fun colonize(inputPath: Path?, outputPath: Path?) {
+        val inputStream = if (inputPath != null) FileInputStream(inputPath.toFile()) else UncloseableInputStream(System.`in`)
+        val str = inputStream.use { ins -> BufferedInputStream(ins).use { bins -> InputStreamReader(bins).use { ir ->
+            ir.readText()
+        } } }
+        val outputStream = if (outputPath != null) FileOutputStream(outputPath.toFile()) else UncloseableOutputStream(System.out)
+        outputStream.use { outs -> BufferedOutputStream(outs).use { bouts -> OutputStreamWriter(bouts).use { ow ->
+                    colonize(str, ow)
+        } } }
     }
 
     /**
      * Adds semi-colons to the lines of the specified reader,
      * and writes the result to the specified writer.
      *
-     * @param reader the reader to read from
+     * @param str the string to read from
      * @param writer the writer to write to
      */
-    fun colonize(reader: Reader, writer: Appendable) {
-        val str = reader.readText()
+    fun colonize(str: String, writer: Appendable) {
         val tokens = InputTokenizer.tokenize(str)
         for(tokenLine in tokens) {
             val (significantTokens, trailingLayout) = splitAtEnd(tokenLine)

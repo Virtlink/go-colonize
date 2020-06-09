@@ -73,33 +73,16 @@ class ColonizeCommand : CliktCommand(name="colonize", help="Adds semi-colons to 
                 if (list) {
                     println("$file -> ${outputPath ?: "STDOUT"}")
                 } else {
-                    BufferedInputStream(FileInputStream(file.toFile())).use { inputStream ->
-                        val outputStream =
-                            if (outputPath != null) BufferedOutputStream(FileOutputStream(outputPath.toFile())) else System.out
-
-                        eprintlnQuiet("$file...")
-
-                        Colonizer.colonize(inputStream, outputStream)
-
-                        outputStream.flush()
-                        if (outputPath != null) outputStream.close()
-                    }
+                    eprintlnQuiet("$file...")
+                    Colonizer.colonize(file, outputPath)
                 }
             }
         } else {
-            val inputStream = System.`in`
             val outputPath = if (outputFile != null) Paths.get(outputFile!!) else null
             if (list) {
                 println("STDIN -> ${outputPath ?: "STDOUT"}")
             } else {
-                val outputStream =
-                    if (outputPath != null) BufferedOutputStream(FileOutputStream(outputPath.toFile())) else System.out
-
-                Colonizer.colonize(inputStream, outputStream)
-
-                outputStream.flush()
-                if (outputPath != null)
-                    outputStream.close()
+                Colonizer.colonize(null, outputPath)
             }
         }
 
