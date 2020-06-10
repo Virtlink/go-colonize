@@ -92,9 +92,8 @@ class ColonizerTests {
     @TestFactory
     fun testColonizeSingleToken() = colonizeLineTestData.map { input ->
         DynamicTest.dynamicTest("colonize \"$input\" -> \"$input;\"") {
-            val inputReader = StringReader(input)
             val outputWriter = StringBuilder()
-            Colonizer.colonize(inputReader, outputWriter)
+            Colonizer.colonize(input, outputWriter)
             val actual = outputWriter.toString()
             assertEquals("$input;", actual)
         }
@@ -115,8 +114,9 @@ class ColonizerTests {
             }
 
             val actualString = javaClass.getResourceAsStream(inputFile).use { InputStreamReader(it).use { inputReader ->
+                val str = inputReader.readText()
                 val output = StringBuilder()
-                Colonizer.colonize(inputReader, output)
+                Colonizer.colonize(str, output)
                 output.toString()
             } }
 
