@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import java.io.InputStreamReader
+import java.nio.file.Paths
 
 class ColonizerTests {
 
@@ -91,14 +92,14 @@ class ColonizerTests {
     fun testColonizeSingleToken() = colonizeLineTestData.map { input ->
         DynamicTest.dynamicTest("colonize \"$input\" -> \"$input;\"") {
             val outputWriter = StringBuilder()
-            Colonizer.colonize("package x; var _ = $input", outputWriter)
+            Colonizer(OnParseError.Fatal).colonize("package x; var _ = $input", outputWriter, null)
             val actual = outputWriter.toString()
             assertEquals("package x; var _ = $input;", actual)
         }
     }
 
     private val colonizeFileTestData = listOf(
-//        "slice3err.go" to "slice3err.expected.go",
+        //"slice3err.go" to "slice3err.expected.go",
         "example.go" to "example.expected.go",
         "fibo.go" to "fibo.expected.go",
         "index.go" to "index.expected.go",
@@ -115,7 +116,7 @@ class ColonizerTests {
             val actualString = javaClass.getResourceAsStream(inputFile).use { InputStreamReader(it).use { inputReader ->
                 val str = inputReader.readText()
                 val output = StringBuilder()
-                Colonizer.colonize(str, output)
+                Colonizer(OnParseError.Fatal).colonize(str, output, Paths.get(inputFile))
                 output.toString()
             } }
 
