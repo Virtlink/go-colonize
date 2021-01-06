@@ -296,4 +296,5 @@ func forall(choices [][]string, f func([]string)) {
 		};
 	};
 	recurse(0);
-};
+}
+;

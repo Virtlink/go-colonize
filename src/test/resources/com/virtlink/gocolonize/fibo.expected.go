@@ -277,7 +277,7 @@ func doBench(half, opt bool) {
 	fmt.Fprintf(w, "wordsize = %d, half = %v, opt = %v\n", W, half, opt);
 	fmt.Fprintf(w, "n\talloc count\talloc bytes\tns/op\ttime/op\t\n");
 	for n := 1; n <= 1e6; n *= 10 {
-		res := testing.Benchmark(func(b *testing.B) { benchFibo(b, n, half, opt) });
+		res := testing.Benchmark(func(b *testing.B) { benchFibo(b, n, half, opt); });
 		fmt.Fprintf(w, "%d\t%d\t%d\t%d\t%s\t\n", n, res.AllocsPerOp(), res.AllocedBytesPerOp(), res.NsPerOp(), time.Duration(res.NsPerOp()));
 	};
 	fmt.Fprintln(w);
@@ -307,4 +307,5 @@ func main() {
 			doBench(i&2 == 0, i&1 != 0);
 		};
 	};
-};
+}
+;

@@ -99,6 +99,7 @@ func (A4) m() {}; // ERROR "cannot define new methods on non-local type reflect.
 
 type B1 = struct{};
 
-func (B1) m() {}; // ERROR "invalid receiver type"
+func (B1) m() {} // ERROR "invalid receiver type"
 
 // TODO(gri) expand
+;
