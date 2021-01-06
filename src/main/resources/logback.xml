@@ -1,0 +1,13 @@
+<configuration scan="true" scanPeriod="15 seconds" debug="false">
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>true</withJansi>
+        <encoder>
+            <!--<pattern>[%highlight(%-5level)] %yellow(%date{yyyy-MM-dd HH:mm:ss}) - %msg%n%red(%xException)</pattern>-->
+            <pattern>[%highlight(%-5level)] %yellow(%date{ISO8601}) [%cyan(%thread)] %green(%logger{0}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="console" />
+    </root>
+</configuration>
