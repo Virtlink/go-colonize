@@ -23,7 +23,8 @@ This tool can also read files from a directory recursively, and output the resul
 
     ./colonize mydir/ --recursive --output-dir myresults/
 
-To list what the tool would do, without actually doing it, add the `--list` option.
+This may cause extra directories to be created when necessary.
+To show what the tool would do, without actually doing it, add the `--dry-run` option.
 
 
 ## License

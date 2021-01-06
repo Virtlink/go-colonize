@@ -45,15 +45,17 @@ fun main(args: Array<String>) = ColonizeCommand()
 fun property(key: String, default: String? = null): String = System.getProperty(key, default)
 
 class ColonizeCommand : CliktCommand(name="colonize", help="Adds semi-colons to a Go file") {
-    val inputs by argument(help="Input files or directories; or none to read from STDIN").multiple().unique()
-    val recursive by option("-r", "--recursive", help="Recursively process the specified directories").flag()
-    val outputFile by option("-O", "--output-file", help="Output file", metavar = "FILE")
-    val outputDir by option("-o", "--output-dir", help="Output directory", metavar = "DIR")
+    // @formatter:off
+    val inputs       by argument(help="Input files or directories; or none to read from STDIN").multiple().unique()
+    val recursive    by option("-r", "--recursive", help="Recursively process the specified directories").flag()
+    val outputFile   by option("-O", "--output-file", help="Output file", metavar = "FILE")
+    val outputDir    by option("-o", "--output-dir", help="Output directory", metavar = "DIR")
     val outputPrefix by option("-p", "--output-prefix", help="Output filename prefix", metavar = "PREFIX")
     val outputSuffix by option("-s", "--output-suffix", help="Output filename suffix", metavar = "SUFFIX")
-    val outputExt by option("-e", "--output-ext", help="Output filename extension, incl dot", metavar = ".EXT")
-    val quiet by option("-q", "--quiet", help="Quiet mode").flag()
-    val list by option("-l", "--list", help="Lists what would happen").flag()
+    val outputExt    by option("-e", "--output-ext", help="Output filename extension, incl dot", metavar = ".EXT")
+    val quiet        by option("-q", "--quiet", help="Quiet mode").flag()
+    val dryRun       by option("-n", "--dry-run", help="Shows what would happen").flag()
+    // @formatter:on
 
     override fun run() {
         val files = gatherFiles()
