@@ -8,17 +8,22 @@ A tool for adding semicolons to Go source code.
 The Go formal grammar uses semicolons to terminate statements for disambiguation. For example, `f()(g())` calls the result of function `f()` with argument `g()`, whereas `f();(g())` is simply two function calls, the latter of which is parenthesized.
 
 To avoid having to write semicolons everywhere, Go allows them to be elided at the end of lines and before closing
-curly braces.[1] To enable a parser to parse Go efficiently, this tool re-inserts these missing semicolons.
+curly braces ([see docs][1]). To enable a parser to parse Go efficiently, this tool re-inserts these missing semicolons.
 
 
 ## Usage
 Specify an input file and output file:
 
-    ./colonize myfile.go -o myoutput.go
+    ./colonize myfile.go --output-file myoutput.go
 
 If the output is omitted, the result will be output on standard out.
 To read the input from the standard input, specify `-` as the input file.
 
+This tool can also read files from a directory recursively, and output the resulting files somewhere else:
+
+    ./colonize mydir/ --recursive --output-dir myresults/
+
+To list what the tool would do, without actually doing it, add the `--list` option.
 
 
 ## License
