@@ -4,6 +4,7 @@ import com.virtlink.gocolonize.parser.GoLexer
 import com.virtlink.gocolonize.parser.GoParser
 import com.virtlink.gocolonize.parser.GoParserBaseListener
 import org.antlr.v4.runtime.*
+import org.antlr.v4.runtime.tree.ErrorNode
 import org.antlr.v4.runtime.tree.TerminalNode
 import java.io.*
 import java.lang.Appendable
@@ -77,7 +78,15 @@ object Colonizer {
             writer.append(';')
         }
 
+        override fun visitErrorNode(node: ErrorNode) {
+            appendNode(node)
+        }
+
         override fun visitTerminal(node: TerminalNode) {
+            appendNode(node)
+        }
+
+        private fun appendNode(node: TerminalNode) {
             val leadingWS = tokens.getHiddenTokensToLeft(node.symbol.tokenIndex) ?: emptyList()
             for (ws in leadingWS) {
                 writer.append(ws.text)

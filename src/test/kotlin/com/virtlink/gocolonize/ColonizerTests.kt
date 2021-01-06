@@ -98,10 +98,11 @@ class ColonizerTests {
     }
 
     private val colonizeFileTestData = listOf(
+//        "slice3err.go" to "slice3err.expected.go",
         "example.go" to "example.expected.go",
         "fibo.go" to "fibo.expected.go",
         "index.go" to "index.expected.go",
-        "alias2.go" to "alias2.expected.go"
+        "alias2.go" to "alias2.expected.go",
     )
 
     @TestFactory
