@@ -101,7 +101,7 @@ class Colonizer(
         override fun exitEos(ctx: GoParser.EosContext) {
             // If the token is non-empty, return
             // It will be added by visitTerminal
-            if (ctx.start.tokenIndex <= ctx.stop.tokenIndex && ctx.start.type != Token.EOF) return
+            if ((ctx.stop == null || ctx.start.tokenIndex <= ctx.stop.tokenIndex) && ctx.start.type != Token.EOF) return
             writer.append(';')
         }
 

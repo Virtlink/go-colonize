@@ -100,6 +100,7 @@ class ColonizerTests {
 
     private val colonizeFileTestData = listOf(
         //"slice3err.go" to "slice3err.expected.go",
+        "issue4776.go" to "issue4776.expected.go",
         "example.go" to "example.expected.go",
         "fibo.go" to "fibo.expected.go",
         "index.go" to "index.expected.go",
@@ -116,7 +117,7 @@ class ColonizerTests {
             val actualString = javaClass.getResourceAsStream(inputFile).use { InputStreamReader(it).use { inputReader ->
                 val str = inputReader.readText()
                 val output = StringBuilder()
-                Colonizer(OnParseError.Fatal).colonize(str, output, Paths.get(inputFile))
+                Colonizer(OnParseError.Warn).colonize(str, output, Paths.get(inputFile))
                 output.toString()
             } }
 
