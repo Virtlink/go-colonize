@@ -7,15 +7,14 @@ import com.github.ajalt.clikt.parameters.arguments.unique
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.versionOption
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
-import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.nio.file.*
-import java.util.function.BiPredicate
 import kotlin.streams.toList
 
-
+/**
+ * The main entry point.
+ *
+ * @param args the command-line arguments
+ */
 fun main(args: Array<String>) = ColonizeCommand()
     .versionOption("${ PropertiesManager.version} (${ PropertiesManager.revision})") { version -> """
         ------------------------------------------------------------
@@ -42,8 +41,7 @@ fun main(args: Array<String>) = ColonizeCommand()
     }
     .main(args)
 
-fun property(key: String, default: String? = null): String = System.getProperty(key, default)
-
+@Suppress("MemberVisibilityCanBePrivate")
 class ColonizeCommand : CliktCommand(name="colonize", help="Adds semi-colons to a Go file") {
     // @formatter:off
     val inputs       by argument(help="Input files or directories; or none to read from STDIN").multiple().unique()
@@ -77,16 +75,20 @@ class ColonizeCommand : CliktCommand(name="colonize", help="Adds semi-colons to 
         if (files.isNotEmpty()) {
             for (file in files) {
                 val outputPath = getOutputPath(file)
-                if (list) {
+                if (dryRun) {
+                    if (outputPath != null && Files.notExists(outputPath.parent)) {
+                        println("Create ${outputPath.parent}")
+                    }
                     println("$file -> ${outputPath ?: "STDOUT"}")
                 } else {
+                    ensureParentExists(outputPath)
                     eprintlnQuiet("$file...")
                     Colonizer.colonize(file, outputPath)
                 }
             }
         } else {
             val outputPath = if (outputFile != null) Paths.get(outputFile!!) else null
-            if (list) {
+            if (dryRun) {
                 println("STDIN -> ${outputPath ?: "STDOUT"}")
             } else {
                 Colonizer.colonize(null, outputPath)
@@ -94,6 +96,17 @@ class ColonizeCommand : CliktCommand(name="colonize", help="Adds semi-colons to 
         }
 
         eprintlnQuiet("Done.")
+    }
+
+    /**
+     * Ensures the parent directory of the specified path exists.
+     *
+     * @param path the path; or `null`
+     */
+    private fun ensureParentExists(path: Path?) {
+        if (path == null) return
+        val parent = path.parent
+        Files.createDirectories(parent)
     }
 
     private val goFileMatcher: PathMatcher = FileSystems.getDefault().getPathMatcher("glob:**.go")
@@ -125,7 +138,7 @@ class ColonizeCommand : CliktCommand(name="colonize", help="Adds semi-colons to 
      * Finds all files in the specified path.
      */
     private fun find(path: Path, depth: Int = Int.MAX_VALUE): List<Path> {
-        return Files.find(path, depth, BiPredicate { p, a -> a.isRegularFile && goFileMatcher.matches(p) }).toList()
+        return Files.find(path, depth, { p, a -> a.isRegularFile && goFileMatcher.matches(p) }).toList()
     }
 
     private fun getOutputPath(path: Path): Path? {
@@ -148,3 +161,12 @@ class ColonizeCommand : CliktCommand(name="colonize", help="Adds semi-colons to 
         return Pair(filename.substring(0, extIndex), filename.substring(extIndex))
     }
 }
+
+/**
+ * Helper function that keys a key from the system properties.
+ *
+ * @param key the key to get
+ * @param default the default value; or `null`
+ * @return the value read from the properties; or the default value if not found
+ */
+fun property(key: String, default: String? = null): String? = System.getProperty(key, default)
